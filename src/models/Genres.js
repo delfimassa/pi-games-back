@@ -4,18 +4,9 @@ const { DataTypes } = require('sequelize');
 module.exports = (sequelize) => {
   // defino el modelo
   sequelize.define('Genres', {
-    // id:{
-    //   type: Datatypes.UUIDV4,
-    //   defaultValue: Datatypes.UUIDV4,
-    //   allowNull:false,
-    //   primaryKey:true,
-    // },
     name: {
-        type: DataTypes.STRING,
+        type: DataTypes.JSON,
         allowNull: false,
-      },
-      // games:{
-      //   type: DataTypes.ARRAY(DataTypes.STRING),
-      // }
+      }
   });
 };
