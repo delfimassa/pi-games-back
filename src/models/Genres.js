@@ -5,7 +5,7 @@ module.exports = (sequelize) => {
   // defino el modelo
   sequelize.define('Genres', {
     name: {
-        type: DataTypes.JSON,
+        type: DataTypes.STRING,
         allowNull: false,
       }
   });
