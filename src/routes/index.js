@@ -1,8 +1,9 @@
+const { Op } = require("sequelize");
 const { Router } = require("express");
 const axios = require("axios");
 const { Videogame, Genres, conn } = require("../db");
 const router = Router();
-const { APIKEY } = process.env;
+const { APIKEY } = process.env;  
 
 // GAMES DE LA API
 const getApiInfo = async () => {
@@ -46,7 +47,7 @@ const getDbInfo = async () => {
     return {
       id: e.id,
       name: e.name,
-      img: e.image,
+      image: e.image,
       rating: e.rating,
       platforms: e.platforms,
       launching: e.launching,
@@ -60,75 +61,55 @@ const getDbInfo = async () => {
 //TODOS LOS GAMES JUNTOS
 const getAllVideoGames = async () => {
   const dbInfo = await getDbInfo();
-  const apiInfo = await getApiInfo();
-  const allInfo = dbInfo.concat(apiInfo);
-  return allInfo;
+  // const apiInfo = await getApiInfo();
+  // const allInfo = dbInfo.concat(apiInfo);
+  // return allInfo;
+  return dbInfo;
 };
 
-async function getByName(name) {
+const getByName = async (name) => {
   try {
-      let dbData = await Videogame.findAll({
-          where: { name: { [Op.like]: `%${name}%` } },
-          include: {
-              model: Genres,
-              attributes: ['name'],
-              trough: {
-                  attributes: []
-              }
-          }
-      })
-      let resultDb=dbData.map(e=>{
-          return{
-              name: e.name,
-              id: e.id,
-              rating: e.rating,
-              description: e.description,
-              img: e.img,
-              genres: e.Genres.map(gr=> gr.dataValues.name),
-              platforms: e.plataforms,
-              launching: e.released || "Release date not available",
-              createdInDb : true
-          }
-      });
-      let apiData = await axios.get(`https://api.rawg.io/api/games?key=${APIKEY}&page_size=15&search=${name}`) 
-      let resultApi = apiData.data.results.map(e => {
-          return {
-              name: e.name,
-              id: e.id,
-              rating: e.rating,
-              genres: e.genres.map(g => g.name),
-              img: e.background_image,
-              platforms: e.platforms == false ? "No disponemos de las plataformas de este juego" : game.platforms.map(plataforma => plataforma.platform.name),
-              launching: e.released,
-              createdInDb : false
-          };
-      })
-      return [...resultApi, ...resultDb]
-  } catch (err) {
-      console.log(err)
-      return "No results"
+    let dataDB = await Videogame.findAll({
+      where: {
+        name: { [Op.iLike]: "%" + name + "%" },
+      },
+      include: Genres,
+    });
+    console.log("datadbd", dataDB);
+    let ordered = dataDB.map(e=>{
+      return {
+        id: e.id,
+        name: e.name,
+        image: e.image,
+        rating: e.rating,
+        platforms: e.platforms,
+        launching: e.launching,
+        genres: e.Genres,
+        createdInDb: true
+      };
+    } );
+     return ordered;
+  } catch (error) {
+  return "Videogame not found" ;
   }
-}
+};
 
-//////////////////GET VIDEOGAMES//////////////////
+//////////////////GET VIDEOGAMES AND VG BY NAME//////////////////
 router.get("/videogames", async (req, res) => {
-  if (req.query.name){
-    return res.send(await getByName(req.query.name))
+  const { name } = req.query;
+  let AllVideogames = await getAllVideoGames();
+
+  if (name) {
+    let videojuegoByQuery = await getByName(name);
+
+    videojuegoByQuery.length
+      ? res.status(200).send(videojuegoByQuery)
+      : res.status(404).send("Videogame not found");
+  } else {
+    res.send(AllVideogames);
   }
-  res.status(200).send(await getAllVideoGames())
-  // const name = req.query.name;
-  // let allGames = await getAllVideoGames();
-  // if (name) {
-  //   let videogameName = await allGames.filter((e) =>
-  //     e.name.toLowerCase().includes(name.toLowerCase())
-  //   );
-  //   videogameName.length
-  //     ? res.status(200).send(videogameName)
-  //     : res.status(404).send("Lo sentimos, no encontramos ese videojuego");
-  // } else {
-  //   res.status(200).send(allGames);
-  // }
 });
+
 
 ////////////////GET GENRES/////////////////////
 router.get("/genres", async (req, res) => {
