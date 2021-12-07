@@ -169,7 +169,16 @@ router.get("/videogames/:id", async (req, res) => {
   const id = req.params.id;
   try {
     if (id.length > 7) {
-      let gamePk = await Videogame.findByPk(id);
+      let gamePk = await Videogame.findOne({
+        where: {id: id},
+        include:{
+          model: Genres,
+          attributes: ["name"],
+          through:{
+            attributes:[]
+          }
+        }
+      });
       if (gamePk) res.status(200).json(gamePk);
     } else {
       let urlId = await axios.get(

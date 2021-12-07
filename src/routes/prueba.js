@@ -56,3 +56,45 @@
 //   }
 
 // });
+
+const getByName = async (name) => {
+  try {
+    let dataDB = await Videogame.findAll({
+      where: {
+        name: { [Op.iLike]: "%" + name + "%" },
+      },
+      include: Genres,
+    });
+    console.log("datadbd", dataDB);
+    let ordered = dataDB.map(e=>{
+      return {
+        id: e.id,
+        name: e.name,
+        image: e.image,
+        rating: e.rating,
+        platforms: e.platforms,
+        launching: e.launching,
+        genres: e.Genres,
+        createdInDb: true
+      };
+    } );
+     return ordered;
+  } catch (error) {
+  return "Videogame not found" ;
+  }
+};
+//////////////////GET VIDEOGAMES AND VG BY NAME//////////////////
+router.get("/videogames", async (req, res) => {
+  const { name } = req.query;
+  let AllVideogames = await getAllVideoGames();
+
+  if (name) {
+    let videojuegoByQuery = await getByName(name);
+
+    videojuegoByQuery.length
+      ? res.status(200).send(videojuegoByQuery)
+      : res.status(404).send("Videogame not found");
+  } else {
+    res.send(AllVideogames);
+  }
+});
