@@ -75,8 +75,8 @@ router.get("/videogames", async (req, res) => {
       e.name.toLowerCase().includes(name.toLowerCase())
     );
     videogameName.length
-      ? res.status(200).send(videogameName)
-      : res.status(404).send("Lo sentimos, no encontramos ese videojuego");
+      ? res.send(videogameName)
+      : res.send("not found");
   } else {
     res.send(allGames);
   }
@@ -124,6 +124,7 @@ router.post("/videogame", async (req, res) => {
       genres,
       createdInDb,
     } = req.body;
+    console.log(req.body);
     let gameCreated = await Videogame.create({
       name,
       description,
@@ -134,7 +135,7 @@ router.post("/videogame", async (req, res) => {
       createdInDb,
     });
     let genreDb = await Genres.findAll({ where: { name: genres } }); //name de tabla genre
-    gameCreated.addGenre(genreDb);
+    gameCreated.addGenres(genreDb);
     // res.send('Videogame created successfully!');
     // await gameCreated.addGenres(genres);
     res.json({ message: "videogame creado con exito", gameCreated });
