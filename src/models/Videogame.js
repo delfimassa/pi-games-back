@@ -15,14 +15,14 @@ module.exports = (sequelize) => {
       allowNull: false,
     },
     description:{
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
     },
     launching:{
       type:DataTypes.STRING,
     },
     rating:{
-      type:DataTypes.INTEGER,
+      type:DataTypes.STRING,
     },
     platforms:{
       type: DataTypes.ARRAY(DataTypes.STRING),

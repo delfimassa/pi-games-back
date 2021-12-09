@@ -133,9 +133,10 @@ router.post("/videogame", async (req, res) => {
       image,
       createdInDb,
     });
-    console.log("genres req.body", genres);
-    await gameCreated.addGenres(genres);
-    console.log("gameCreated", gameCreated);
+    let genreDb = await Genres.findAll({ where: { name: genres } }); //name de tabla genre
+    gameCreated.addGenre(genreDb);
+    // res.send('Videogame created successfully!');
+    // await gameCreated.addGenres(genres);
     res.json({ message: "videogame creado con exito", gameCreated });
   } catch (error) {
     res.send(error);
