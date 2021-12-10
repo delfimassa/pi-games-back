@@ -66,17 +66,84 @@ const getAllVideoGames = async () => {
   return allInfo;
 };
 
+async function getByNameApi(name) {
+  try {
+    let videogameName = await axios.get(
+      `http://api.rawg.io/api/games?search=${name}&key=${APIKEY}`
+    );
+    let homeData = await videogameName.data.results.map((e) => {
+      return {
+        id: e.id,
+        name: e.name,
+        image: e.background_image,
+        rating: e.rating,
+        platforms: e.platforms,
+        launching: e.released,
+        genres: e.genres.map((elem) => {
+          return {
+            name: elem.name,
+          };
+        }), //es un array con objetos x c/genero
+        createdInDb: false,
+      };
+    });
+    return homeData;
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+const getByNameDb = async (name) => {
+  try {
+    const dbGamesByName = await Videogame.findAll({
+      where: { name: { [Op.like]: `%${name}%` } },
+      include: {
+        model: Genres,
+        attributes: ["name"],
+        trough: {
+          attributes: [],
+        },
+      },
+    });
+    const dbData = dbGamesByName.map((e) => {
+      return {
+        id: e.id,
+        name: e.name,
+        image: e.image,
+        rating: e.rating,
+        platforms: e.platforms,
+        launching: e.launching,
+        genres: e.Genres,
+        createdInDb: true,
+      };
+    });
+    return dbData;
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+//TODOS LOS GAMES JUNTOS BY NAME
+const getAllVideoGamesByName = async (name) => {
+  const dbInfoByName = await getByNameApi(name);
+  const apiInfoByName = await getByNameDb(name);
+  const allInfoByName = dbInfoByName.concat(apiInfoByName);
+  return allInfoByName;
+};
+
 //////////////////GET VIDEOGAMES AND VG BY NAME//////////////////
 router.get("/videogames", async (req, res) => {
   const { name } = req.query;
-  let allGames = await getAllVideoGames(name);
+  let allGames = await getAllVideoGames();
   if (name) {
-    let videogameName = await allGames.filter((e) =>
-      e.name.toLowerCase().includes(name.toLowerCase())
-    );
-    videogameName.length
-      ? res.send(videogameName)
-      : res.send("not found");
+    let resultsByName = await getAllVideoGamesByName(name);
+    resultsByName.length ? res.send(resultsByName) : res.send("not found");
+    // let videogameName = await allGames.filter((e) =>
+    //   e.name.toLowerCase().includes(name.toLowerCase())
+    // );
+    // videogameName.length
+    //   ? res.send(videogameName)
+    //   : res.send("not found");
   } else {
     res.send(allGames);
   }
@@ -136,8 +203,6 @@ router.post("/videogame", async (req, res) => {
     });
     let genreDb = await Genres.findAll({ where: { name: genres } }); //name de tabla genre
     gameCreated.addGenres(genreDb);
-    // res.send('Videogame created successfully!');
-    // await gameCreated.addGenres(genres);
     res.json({ message: "videogame creado con exito", gameCreated });
   } catch (error) {
     res.send(error);
