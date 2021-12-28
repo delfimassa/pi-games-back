@@ -4,7 +4,7 @@ const axios = require("axios");
 const { Videogame, Genres, conn } = require("../db");
 const router = Router();
 const { APIKEY } = process.env;
-
+// const router = Router();
 // GAMES DE LA API
 const getApiInfo = async () => {
   const apiInfoGames = [];
@@ -12,6 +12,7 @@ const getApiInfo = async () => {
   while (i <= 5) {
     const apiUrlGames = await axios.get(
       `http://api.rawg.io/api/games?key=${APIKEY}&page=${i}`
+      //pasar a usando .next en variable  + promise all llamando variables para optimizar tiempo
     );
     await apiUrlGames.data.results.map((e) => {
       apiInfoGames.push({
@@ -21,6 +22,7 @@ const getApiInfo = async () => {
         rating: e.rating,
         platforms: e.platforms,
         launching: e.released,
+        metacritic: e.metacritic,
         genres: e.genres.map((elem) => {
           return {
             name: elem.name,
@@ -96,7 +98,7 @@ async function getByNameApi(name) {
 const getByNameDb = async (name) => {
   try {
     const dbGamesByName = await Videogame.findAll({
-      where: { name: { [Op.like]: `%${name}%` } },
+      where: { name: { [Op.iLike]: `%${name}%` } },
       include: {
         model: Genres,
         attributes: ["name"],
@@ -156,12 +158,10 @@ router.get("/genres", async (req, res) => {
   );
   const genres = await genresApi.data.results.map((g) => {
     return [g.name];
-  }); //array de arrays [["Actions"], ["Adventure"]]
-  // console.log("genressss", genres);
+  }); //array de arraycitos [["Actions"], ["Adventure"]]
   const eachGenre = genres.map((g) => {
     for (let i = 0; i < genres.length; i++) return g[i];
   }); //ahora si tengo un array de nombres ["Actions", "Adventure"]
-  // console.log(eachGenre);
   eachGenre.forEach((e) => {
     Genres.findOrCreate({
       where: { name: e },
@@ -256,11 +256,6 @@ router.get("/videogames/:id", async (req, res) => {
     } else {
       let gameapi = await getGameIdApi(id);
       if (gameapi) res.status(200).send(gameapi);
-      // let urlId = await axios.get(
-      //   `https://api.rawg.io/api/games/${id}?key=${APIKEY}`
-      // );
-      // let gameId = await urlId.data;
-      // if (gameId) res.status(200).json(gameId);
     }
   } catch (err) {
     res.status(404).send("GAME NOT FOUND");
